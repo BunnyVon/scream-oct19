@@ -835,6 +835,11 @@ contains
    call addfld('Nudge_T',(/ 'lev' /),'A','K/s'    ,'T Nudging Tendency')
    call addfld('Nudge_Q',(/ 'lev' /),'A','kg/kg/s','Q Nudging Tendency')
 
+   !call addfld('Nudge_Utau',(/ 'lev' /),'A','#'  ,'U coef')
+   !call addfld('Nudge_Vtau',(/ 'lev' /),'A','#'  ,'V coef')
+   !call addfld('Nudge_Ttau',(/ 'lev' /),'A','#'  ,'T coef')
+   !call addfld('Nudge_Qtau',(/ 'lev' /),'A','#'  ,'Q coef')
+
    !-----------------------------------------
    ! Values initialized only by masterproc
    !-----------------------------------------
@@ -1070,18 +1075,26 @@ contains
        if ( Nudge_Uprof .ne. 0 ) then
           call nudging_set_profile(rlat,rlon,Nudge_Uprof,Wprof,pver)
           Nudge_Utau(icol,:,lchnk)=Wprof(:)
+          !no nudging of U below 850 hPa, ~102 level, by Jianfeng Li --20221003
+          Nudge_Utau(icol,102:,lchnk)=0._r8
        end if
        if ( Nudge_Vprof .ne. 0 ) then
           call nudging_set_profile(rlat,rlon,Nudge_Vprof,Wprof,pver)
           Nudge_Vtau(icol,:,lchnk)=Wprof(:)
+          !no nudging of V below 850 hPa, ~102 level, by Jianfeng Li --20221003
+          Nudge_Vtau(icol,102:,lchnk)=0._r8
        end if
        if ( Nudge_Tprof .ne. 0 ) then
           call nudging_set_profile(rlat,rlon,Nudge_Tprof,Wprof,pver)
           Nudge_Ttau(icol,:,lchnk)=Wprof(:)
+          !no nudging of T below 850 hPa, ~102 level, by Jianfeng Li --20221003
+          Nudge_Ttau(icol,102:,lchnk)=0._r8
        end if
        if ( Nudge_Qprof .ne. 0 ) then
           call nudging_set_profile(rlat,rlon,Nudge_Qprof,Wprof,pver)
           Nudge_Qtau(icol,:,lchnk)=Wprof(:)
+          !no nudging of Q below 850 hPa, ~102 level, by Jianfeng Li --20221003
+          Nudge_Qtau(icol,102:,lchnk)=0._r8
        end if
        if ( Nudge_PSprof .ne. 0 ) then
           Nudge_PStau(icol,lchnk)=nudging_set_PSprofile(rlat,rlon,Nudge_PSprof)
@@ -1633,6 +1646,24 @@ contains
            Nudge_Qstep(:ncol,:pver,lchnk) =0._r8
         end if
      end if
+     !
+     !if (Nudge_Uprof .ne. 0) then
+     !   phys_tend%u(:ncol,:pver)       =Nudge_Utau(:ncol,:pver,lchnk)
+     !end if
+     !if (Nudge_Vprof .ne. 0) then
+     !   phys_tend%v(:ncol,:pver)       =Nudge_Vtau(:ncol,:pver,lchnk)
+     !end if
+     !if (Nudge_Tprof .ne. 0) then
+     !   phys_tend%s(:ncol,:pver)       =Nudge_Ttau(:ncol,:pver,lchnk)*cpair
+     !end if
+     !if (Nudge_Qprof .ne. 0) then
+     !   phys_tend%q(:ncol,:pver,indw)  =Nudge_Qtau(:ncol,:pver,lchnk)
+     !end if
+
+     !call outfld('Nudge_Utau',phys_tend%u          ,pcols,lchnk)
+     !call outfld('Nudge_Vtau',phys_tend%v          ,pcols,lchnk)
+     !call outfld('Nudge_Ttau',phys_tend%s/cpair    ,pcols,lchnk)
+     !call outfld('Nudge_Qtau',phys_tend%q(1,1,indw),pcols,lchnk)
 
      if (Nudge_Uprof .ne. 0) then
         phys_tend%u(:ncol,:pver)       =Nudge_Ustep(:ncol,:pver,lchnk)

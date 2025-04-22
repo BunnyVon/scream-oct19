@@ -241,7 +241,10 @@ lnd/clm2/surfdata_map/surfdata_arcticx4v1pg2_simyr2000_c210707.nc</fsurdat>
 lnd/clm2/surfdata_map/surfdata_arcticx4v1pg2_simyr1950_c221017.nc</fsurdat>
 <fsurdat hgrid="ne0np4_arcticx4v1.pg2"   sim_year="1850" use_crop=".false." >
 lnd/clm2/surfdata_map/surfdata_arcticx4v1pg2_simyr1850_c210707.nc</fsurdat>
-
+<fsurdat hgrid="ne0np4_WNP_ne1024.pg2"   sim_year="2010" use_crop=".false." >
+/pscratch/sd/s/souravt/RRM_setup_tutorial/RRM_generation_inputs/surfdata_WNP_ne128x8pg2_simyr2010_c230411.nc</fsurdat>
+<fsurdat hgrid="ne0np4_AT_ne1024.pg2"   sim_year="2010" use_crop=".false." >
+/global/cfs/cdirs/e3sm/feng809/TRIDENT/input/surfdata_ATL_ne128x8pg2_simyr2010_c231026.nc</fsurdat>
 
 <!-- f10 resolution -->
 

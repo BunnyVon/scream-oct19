@@ -920,6 +920,7 @@ contains
              SDAT%dtmax(n) = max(SDAT%dtmax(n),dtime)
              if ((SDAT%dtmax(n)/SDAT%dtmin(n)) > SDAT%dtlimit(n)) then
                 write(logunit,*) trim(subname),' ERROR: for stream ',n
+                write(logunit,*) trim(subname),' ERROR: for stream ',n, SDAT%streams(n)
                 write(logunit,*) trim(subName),' ERROR: dt limit1 ',SDAT%dtmax(n),SDAT%dtmin(n),SDAT%dtlimit(n)
                 write(logunit,*) trim(subName),' ERROR: dt limit2 ',SDAT%ymdLB(n),SDAT%todLB(n), &
                      SDAT%ymdUB(n),SDAT%todUB(n)
