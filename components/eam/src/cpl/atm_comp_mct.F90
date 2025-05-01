@@ -52,6 +52,7 @@ module atm_comp_mct
   use perf_mod
   use cam_logfile      , only: iulog
   use co2_cycle        , only: co2_readFlux_ocn, co2_readFlux_fuel
+  use h3_cycle         , only:  h3_readFlux_ant
   use runtime_opts     , only: read_namelist
 
   use iop_data_mod     , only: single_column,scmlat,scmlon,scm_multcols

@@ -384,6 +384,11 @@
   <lname>2010_EAM%SCREAM-HR-DYAMOND2_ELM45%SPBC_MPASSI_MPASO_MOSART_SGLC_SWAV</lname>
 </compset>
 
+<compset>
+  <alias>A_SCREAM-HR-DYAMOND2-TRITIUM</alias>
+  <lname>2010_EAM%SCREAM-HR-DYAMOND2-TRITIUM_ELM45%SPBC_MPASSI_MPASO_MOSART_SGLC_SWAV</lname>
+</compset>
+
 <!-- E3SM BG compsets -->
 
 <compset>

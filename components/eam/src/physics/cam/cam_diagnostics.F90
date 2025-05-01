@@ -976,7 +976,7 @@ end subroutine diag_conv_tend_ini
     use constituent_burden, only: constituent_burden_comp
     use cam_control_mod,    only: moist_physics
     use co2_cycle,          only: c_i, co2_transport
-
+    use h3_cycle,           only: h_i, h3_transport ! added for H3 transport by S. Feng 20250422
     use tidal_diag,         only: tidal_diag_write
 !-----------------------------------------------------------------------
 !
@@ -1033,6 +1033,13 @@ end subroutine diag_conv_tend_ini
           call outfld(trim(cnst_name(c_i(m)))//'_BOT', state%q(1,pver,c_i(m)), pcols, lchnk)
        end do
     end if
+
+   ! added for H3 transport by S. Feng 20250422, H3_ANT and H3
+    if (h3_transport()) then
+       do m = 1,2
+          call outfld(trim(cnst_name(h_i(m)))//'_BOT', state%q(1,pver,h_i(m)), pcols, lchnk)
+       end do
+    end if 
 
     ! column burdens of all constituents except water vapor
     call constituent_burden_comp(state)
@@ -2093,6 +2100,7 @@ subroutine diag_surf (cam_in, cam_out, ps, trefmxav, trefmnav )
 
    use time_manager,     only: is_end_curr_day
    use co2_cycle,        only: c_i, co2_transport
+   use h3_cycle,         only: h_i, h3_transport !added for H3 transport by S. Feng 20250422
    use constituents,     only: sflxnam
 
 !-----------------------------------------------------------------------
@@ -2183,6 +2191,13 @@ subroutine diag_surf (cam_in, cam_out, ps, trefmxav, trefmnav )
     if (co2_transport()) then
        do m = 1,4
           call outfld(sflxnam(c_i(m)), cam_in%cflx(:,c_i(m)), pcols, lchnk)
+       end do
+    end if
+
+   ! added for H3 transport by S. Feng 20250422
+    if (h3_transport()) then
+       do m = 1,2
+          call outfld(sflxnam(h_i(m)), cam_in%cflx(:,h_i(m)), pcols, lchnk)
        end do
     end if
 

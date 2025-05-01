@@ -1,0 +1,399 @@
+
+
+module h3_cycle
+
+!------------------------------------------------------------------------------------------------
+! Tritium (^3H) is not stable in air in the sense that it forms tritiated water and can diffuse easily. 
+!	1.	Radioactive Decay: Tritium is a radioactive isotope of hydrogen with a half-life of about 12.3 years. 
+!     It undergoes beta decay, turning into helium-3 while emitting low-energy beta radiation.
+!	2.	Chemical Reactivity: In its molecular form (T_2 or HT), tritium behaves similarly to hydrogen and can 
+!     react with oxygen to form tritiated water (HTO or T_2O), which is highly mobile in the environment.
+!	3.	Diffusion: Tritium gas is extremely light and diffusive, meaning it can escape easily and spread in 
+!     the atmosphere.
+!	4.	Water Absorption: If tritium gas is exposed to oxygen or moisture in the air, it rapidly forms tritiated 
+!     water (HTO), which can contaminate water sources and be absorbed by living organisms.
+! 
+! Full h3 cycle includes global background (less than 10 Bq/L in most places), natural (low, ~0.1–1 Bq/L in 
+! precipitation) and anthropogenic (nuclear reactions). 
+! Hydrological & Atmospheric Pathways: Since tritiated water (HTO) behaves like normal water, its background 
+! levels in rain, groundwater, and air humidity should be considered to assess accumulation over time.
+! 
+! 1.	Atmosphere (Airborne Tritium)
+! •	Tritium exists as:
+! •	HT (elemental tritium gas, low reactivity)
+! •	HTO (tritiated water vapor, highly mobile and bioavailable)
+! •	Atmospheric tritium levels are usually measured in Bq/m³ and are much lower than precipitation values.
+! 2.	Surface and Groundwater
+! •	Tritium in rivers, lakes, and oceans results from a mix of precipitation, direct releases, and groundwater flow.
+! •	Groundwater often retains older tritium (from past nuclear tests or natural sources), and concentrations vary with depth and recharge time.
+! 3.	Soil and Vegetation
+! •	Tritiated water (HTO) can exchange with biological systems, leading to incorporation into plants and animals.
+! •	It can also be stored in soil moisture, affecting long-term environmental tritium cycling.
+
+! Purpose:
+! For the first implementation, only the HT transport is considered. 
+! The output provides distributions of H3_ANT, H3
+! Read H3 flux from nuclear leakage
+!
+! Authors: Sha Feng, April 22, 2025 (inspired by co2_cycle.F90)
+! 
+!
+!                                              
+!------------------------------------------------------------------------------------------------
+
+use shr_kind_mod,   only: r8 => shr_kind_r8, cxx =>SHR_KIND_CXX, cl =>SHR_KIND_CL
+use h3_data_flux,  only: h3_data_flux_type
+
+implicit none
+private
+save
+ 
+! Public interfaces
+public h3_cycle_readnl              ! read the namelist 
+public h3_register                  ! register consituents
+public h3_transport                 ! turn on h3 tracers transport
+public h3_implements_cnst           ! returns true if consituent is implemented by this package
+public h3_init_cnst                 ! initialize mixing ratios if not read from initial file
+public h3_init                      ! initialize (history) variables
+public h3_time_interp_ant           ! time interpolate h3 flux
+public h3_cycle_set_cnst_type       ! set h3 tracers mixing type for local versions of cnst_type
+
+! Public data
+ 
+public data_flux_ant                ! data read in for h3 flux from fuel
+ 
+TYPE(h3_data_flux_type) :: data_flux_ant
+                         
+public h_i                           ! global index for new constituents
+public h3_readFlux_ant             ! read h3 flux from data file 
+public h3_print_diags_timestep      ! print out h3 conservation diagnostics every timestep
+public h3_print_diags_monthly       ! print out h3 conservation diagnostics monthly
+public h3_print_diags_total         ! print out a h3 conservation check for the full run
+public h3_conserv_error_tol_per_year! error tolerance for h3 conservation
+
+
+! Namelist variables
+logical :: h3_flag              = .false.       ! true => turn on h3 code, namelist variable
+logical :: h3_readFlux_ant     = .false.       ! true => read h3 flux from anthropoentic activity, namelist variable
+logical :: h3_read_from_ic_file = .false.
+logical :: h3_print_diags_timestep = .false.    ! true => print out h3 conservation diagnostics every timestep
+logical :: h3_print_diags_monthly  = .false.    ! true => print out h3 conservation diagnostics monthly
+logical :: h3_print_diags_total    = .false.    ! true => print out a h3 conservation check for the full run
+
+real(r8) :: h3_conserv_error_tol_per_year       ! error tolerance for h3 conservation
+
+character(len=cl) :: h3flux_ant_file = 'unset' ! h3 flux from anthropoentic   activity
+character(len=cl) :: h3_ic_file = 'unset' ! h3  from initial condition file
+
+!-----------------------------------------------------------------------
+! new constituents
+integer, parameter :: ncnst = 2                      ! number of constituents implemented
+
+character(len=7), dimension(ncnst), parameter :: & ! constituent names
+     c_names = (/'H3_ANT', 'H3'/)
+
+integer :: h3_ant_glo_ind ! global index of 'H3_ANT'
+integer :: h3_glo_ind     ! global index of 'H3'
+
+integer, dimension(ncnst) :: h_i                   ! global index
+
+!================================================================================================
+contains
+!================================================================================================
+
+subroutine h3_cycle_readnl(nlfile)
+
+   !-----------------------------------------------------------------------
+   ! Read h3_cycle_nl namelist group.
+   !
+   ! Called by:
+   !    runtime_opts.F90 ! updated by S. Feng 20250422
+   !-----------------------------------------------------------------------
+
+   use namelist_utils,  only: find_group_name
+   use units,           only: getunit, freeunit
+   use spmd_utils,      only: masterproc, mpicom, mstrid=>masterprocid, mpi_logical, & 
+                              mpi_character, mpi_real8
+   ! use srf_field_check, only: active_Faoo_fh3_ocn !will need to consider similar items if H3 
+   ! communicates between components (S. Feng 20250422)
+   use shr_log_mod ,    only: errMsg => shr_log_errMsg
+   use cam_abortutils,  only: endrun
+
+   !arguments
+   character(len=*), intent(in) :: nlfile  ! filepath for file containing namelist input
+
+   ! Local variables
+   integer            :: unitn, ierr
+   character(len=cxx) :: err_str
+   character(len=*), parameter :: subname = 'h3_cycle_readnl'
+
+      namelist /h3_cycle_nl/ h3_flag, h3_readFlux_ant, h3flux_ant_file,  h3_read_from_ic_file, h3_ic_file,& 
+                           h3_print_diags_timestep, h3_print_diags_monthly, h3_print_diags_total, &
+                           h3_conserv_error_tol_per_year         
+   !-----------------------------------------------------------------------------
+
+   if (masterproc) then
+      unitn = getunit()
+      open( unitn, file=trim(nlfile), status='old' )
+      call find_group_name(unitn, 'h3_cycle_nl', status=ierr)
+      if (ierr == 0) then
+         read(unitn, h3_cycle_nl, iostat=ierr)
+         if (ierr /= 0) then
+            call endrun(subname // ':: ERROR reading namelist'//errmsg(__FILE__,__LINE__))
+         end if
+      end if
+      close(unitn)
+      call freeunit(unitn)
+   end if
+
+#ifdef SPMD
+
+   !Broadcast namelist variables
+   call mpi_bcast(h3_flag,                               1,   mpi_logical,   mstrid, mpicom, ierr)
+   if (ierr /= 0) call endrun(subname//": FATAL: mpi_bcast: h3_flag"//errmsg(__FILE__,__LINE__))
+   
+   call mpi_bcast(h3_readFlux_ant,                      1,   mpi_logical,   mstrid, mpicom, ierr)
+   if (ierr /= 0) call endrun(subname//": FATAL: mpi_bcast: h3_readFlux_ant"//errmsg(__FILE__,__LINE__))
+   
+   call mpi_bcast(h3flux_ant_file, len(h3flux_ant_file),   mpi_character, mstrid, mpicom, ierr)
+   if (ierr /= 0) call endrun(subname//": FATAL: mpi_bcast: h3flux_ant_file"//errmsg(__FILE__,__LINE__))
+   
+   call mpi_bcast(h3_read_from_ic_file,                  1,   mpi_character, mstrid, mpicom, ierr)
+   if (ierr /= 0) call endrun(subname//": FATAL: mpi_bcast: h3_read_from_ic_file"//errmsg(__FILE__,__LINE__))
+   
+   call mpi_bcast(h3_ic_file,  len(h3_ic_file), ,   mpi_logical,   mstrid, mpicom, ierr)
+   if (ierr /= 0) call endrun(subname//": FATAL: mpi_bcast: h3_print_diags_timestep"//errmsg(__FILE__,__LINE__))
+   
+   call mpi_bcast(h3_print_diags_monthly,                1,   mpi_logical,   mstrid, mpicom, ierr)
+   if (ierr /= 0) call endrun(subname//": FATAL: mpi_bcast: h3_print_diags_monthly"//errmsg(__FILE__,__LINE__))
+   call mpi_bcast(h3_print_diags_total,                  1,   mpi_logical,   mstrid, mpicom, ierr)
+   if (ierr /= 0) call endrun(subname//": FATAL: mpi_bcast: h3_print_diags_total"//errmsg(__FILE__,__LINE__))
+   call mpi_bcast(h3_conserv_error_tol_per_year,         1,   mpi_real8,     mstrid, mpicom, ierr)
+   if (ierr /= 0) call endrun(subname//": FATAL: mpi_bcast: h3_conserv_error_tol_per_year"//errmsg(__FILE__,__LINE__))
+#endif
+
+end subroutine h3_cycle_readnl
+
+!================================================================================================
+
+subroutine h3_register
+  !----------------------------------------------------------------------- 
+  ! 
+  ! Purpose: register advected constituents 
+  ! 
+  ! Called by:
+  !    physpkg.F90 ! updated by S. Feng 20250422
+  !-----------------------------------------------------------------------
+
+
+
+  use constituents,   only: cnst_add
+  use physconst,      only: mwdry, mwh3, gravit, cpair ! updated physconst.F90 by S. Feng 20250422
+  
+  !local variables
+  integer  :: idx
+  
+  if (.not. h3_flag) return
+  
+  ! h3 as dry tracer ! for first implementation by S. Feng 20250422; however, technically it should be a wet tracer
+  do idx = 1, ncnst
+     !mwh3(molecular weight), cpair (heat capacities),1.e-20_r8 (minimum allowed mmr)
+     call cnst_add(c_names(idx), mwh3, cpair, 1.e-20_r8, h_i(idx), longname=c_names(idx), readiv=h3_read_from_ic_file , mixtype='dry')
+     
+     select case (trim(c_names(idx)))
+     case ('H3_ANT')
+        h3_ant_glo_ind = h_i(idx)
+     case ('H3')
+        h3_glo_ind     = h_i(idx)
+     end select
+     
+  end do
+
+end subroutine h3_register
+
+!================================================================================================
+
+function h3_transport()
+
+!-----------------------------------------------------------------------
+! 
+! Purpose: return true if this package is active
+!
+! Called by:
+!    camsrfexch.F90 atm_import_export.F90 cam_diagnostics.F90 
+!    physpkg.F90 restart_physics.F90 ! updated for H3 by S. Feng 20250422
+!-----------------------------------------------------------------------
+   logical :: h3_transport
+!-----------------------------------------------------------------------
+
+   h3_transport = h3_flag
+
+end function h3_transport
+
+!================================================================================================
+
+function h3_implements_cnst(name)
+
+!----------------------------------------------------------------------- 
+! 
+! Purpose: return true if specified constituent is implemented by this package
+!
+! Called by:
+!    inidat.F90 ! update for H3 by S. Feng 20250422
+!-----------------------------------------------------------------------
+    implicit none
+!-----------------------------Arguments---------------------------------
+
+    character(len=*), intent(in) :: name  ! constituent name
+    logical :: h3_implements_cnst        ! return value
+
+    integer :: m_ind     
+      
+    h3_implements_cnst = .false.
+ 
+    if (.not. h3_flag) return
+ 
+    do m_ind = 1, ncnst
+       if (name == c_names(m_ind)) then
+          h3_implements_cnst = .true.
+          return
+       end if
+    end do
+  end function h3_implements_cnst
+
+!===============================================================================  
+
+subroutine h3_init
+
+!----------------------------------------------------------------------- 
+! 
+! Purpose: initialize h3,
+!          declare history variables,
+!          read h3 flux form ant,a as data_flux_ant
+!
+! Called by:
+!    physpkg.F90 ! updated for H3 by S. Feng 20250422
+!-----------------------------------------------------------------------
+
+    use cam_history,    only: addfld, horiz_only, add_default
+    use h3_data_flux,  only: h3_data_flux_init
+    use constituents,   only: cnst_get_ind, cnst_name, cnst_longname, sflxnam
+    !Local variables
+    integer :: m_ind, mm
+
+
+    if (.not. h3_flag) return
+ 
+    ! Add constituents and fluxes to history file
+    do m_ind = 1, ncnst
+        mm = h_i(m_ind)
+
+       call addfld(trim(cnst_name(mm))//'_BOT',     horiz_only, 'A', 'kg/kg', trim(cnst_longname(mm))//', Bottom Layer')
+       call addfld(cnst_name(mm),  (/ 'lev' /), 'A',               'kg/kg', cnst_longname(mm))
+       call addfld(sflxnam(mm),   horiz_only, 'A',                 'kg/m2/s', trim(cnst_name(mm))//' surface flux')
+
+       call add_default(cnst_name(mm), 1, ' ')
+       call add_default(sflxnam(mm),   1, ' ')
+
+       ! The addfld call for the 'TM*' fields are made by default in the 
+       ! constituent_burden module.
+       call add_default('TM'//trim(cnst_name(mm)), 1, ' ')
+    end do
+
+    ! Read flux data
+    if (h3_readFlux_ant) then
+       call h3_data_flux_init ( h3flux_ant_file, 'h3_flux', data_flux_ant )
+    end if
+ 
+  end subroutine h3_init
+
+!==========================================================================================
+
+  subroutine h3_time_interp_ant              
+ 
+!-----------------------------------------------------------------------
+!
+! Purpose: Time interpolate h3 flux to current time.
+!          Read in new monthly data if necessary
+!
+! Called by:
+!    atm_import_export.F90 ! updated for H3 by S. Feng 20250422
+!-----------------------------------------------------------------------
+
+   use time_manager,   only: is_first_step
+   use h3_data_flux,  only: h3_data_flux_advance
+
+   !----------------------------------------------------------------------------
+
+   if (.not. h3_flag) return
+ 
+   if (h3_readFlux_ant)  then
+      call h3_data_flux_advance ( data_flux_ant )
+   endif
+ 
+  end subroutine h3_time_interp_ant
+
+!===========================================================================================
+ 
+subroutine h3_init_cnst(name, q, gcid)
+
+!----------------------------------------------------------------------- 
+! 
+! Purpose: 
+! Set initial values of H3_ANT and H3
+! Need to be called from process_inidat in inidat.F90
+! (or, initialize h3 in h3_timestep_init)        
+!
+! Called by:
+!    inidat.F90
+!-----------------------------------------------------------------------
+
+  use chem_surfvals,  only: chem_surfvals_get
+
+  ! Arguments
+   character(len=*), intent(in) :: name         ! constituent name
+   real(r8), intent(out) :: q(:,:)   !  mass mixing ratio
+   integer, intent(in) :: gcid(:)    ! global column id
+   !-----------------------------------------------------------------------
+
+   if (.not. h3_flag) return
+ 
+   select case (name)
+   case ('H3_ANT')
+      q = chem_surfvals_get('h3MMR')
+   case ('H3')
+      q = chem_surfvals_get('h3MMR')
+   end select
+
+end subroutine h3_init_cnst
+!===============================================================================
+
+!===============================================================================
+
+subroutine h3_cycle_set_cnst_type(cnst_type_loc, cnst_type_val)
+
+!----------------------------------------------------------------------- 
+! 
+! Purpose: 
+! Set a local copy of cnst_type to be 'wet' or 'dry'       
+!
+!-----------------------------------------------------------------------
+   use constituents, only: pcnst
+
+! Arguments
+   character(len=3), intent(inout) :: cnst_type_loc(pcnst) ! a local copy of cnst_type
+   character(len=3), intent(in)    :: cnst_type_val        ! set mmr type: 'wet' or 'dry'
+   integer                         :: m                    ! loop index
+!-----------------------------------------------------------------------
+
+   if (.not. h3_flag) return
+
+   ! set cnst_type_loc for each h3 tracer
+   do m = 1, ncnst
+      cnst_type_loc(h_i(m)) = cnst_type_val
+   end do
+
+end subroutine h3_cycle_set_cnst_type
+!===============================================================================
+ 
+end module h3_cycle

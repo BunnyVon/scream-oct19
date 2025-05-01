@@ -481,6 +481,7 @@ subroutine vertical_diffusion_tend( ztodt    , state    ,                  &
   use molec_diff,         only : compute_molec_diff, vd_lu_qdecomp
   use constituents,       only : qmincg, qmin, cnst_type
   use co2_cycle,          only : co2_cycle_set_cnst_type
+  use h3_cycle,           only : h3_cycle_set_cnst_type ! added for H3 transport by S. Feng 20250423
   use diffusion_solver,   only : compute_vdiff, any, operator(.not.)
   use physconst,          only : cpairv, rairv ! Needed for calculation of upward H flux
   use time_manager,       only : get_nstep
@@ -591,6 +592,7 @@ subroutine vertical_diffusion_tend( ztodt    , state    ,                  &
   ! don't convert co2 tracers to wet mixing ratios
   cnst_type_loc(:) = cnst_type(:)
   call co2_cycle_set_cnst_type(cnst_type_loc, 'wet')
+  call h3_cycle_set_cnst_type(cnst_type_loc, 'wet') ! added for H3 transport by S. Feng 20250423
   call set_dry_to_wet(state, cnst_type_loc)
 
   rztodt = 1._r8 / ztodt
@@ -786,6 +788,7 @@ subroutine vertical_diffusion_tend( ztodt    , state    ,                  &
   ! convert wet mmr back to dry before conservation check avoid converting co2 tracers again
   cnst_type_loc(:) = cnst_type(:)
   call co2_cycle_set_cnst_type(cnst_type_loc, 'wet')
+  call h3_cycle_set_cnst_type(cnst_type_loc, 'wet') ! added for H3 transport by S. Feng 20250423
   call set_wet_to_dry(state, cnst_type_loc)
 
   !-----------------------------------------------------------------------------

@@ -63,6 +63,9 @@ module camsrfexch
      real(r8), allocatable :: thbot(:)    ! 
      real(r8), allocatable :: co2prog(:)  ! prognostic co2
      real(r8), allocatable :: co2diag(:)  ! diagnostic co2
+     ! H3 only considers emissions from nuclear reacction in the experiments; 
+     ! no influx from other components but from external files. However, cam_ou should be considered for atm2land
+     real(r8), allocatable :: h3(:)       ! h3 add for h3 by S. Feng 20250422
      real(r8), allocatable :: psl(:)
      real(r8), allocatable :: bcphiwet(:) ! wet deposition of hydrophilic black carbon
      real(r8), allocatable :: bcphidry(:) ! dry deposition of hydrophilic black carbon
@@ -686,7 +689,8 @@ subroutine cam_export(state,cam_out,pbuf)
    use comsrf,           only: psm1, srfrpdel, prcsnw
    use chem_surfvals,    only: chem_surfvals_get
    use co2_cycle,        only: co2_transport, c_i
-   use physconst,        only: mwdry, mwco2
+   use h3_cycle,         only: h3_transport, h_i ! added for H3 by S. Feng 20250422
+   use physconst,        only: mwdry, mwco2, mwh3
    use constituents,     only: pcnst
    use cam_control_mod,  only: rair
    use physics_buffer,   only: pbuf_get_index, pbuf_get_field, physics_buffer_desc
@@ -799,6 +803,13 @@ subroutine cam_export(state,cam_out,pbuf)
    if (co2_transport()) then
       do i=1,ncol
          cam_out%co2prog(i) = state%q(i,pver,c_i(4)) * 1.0e+6_r8 *mwdry/mwco2
+      end do
+   end if
+
+!  ! H3 transport !updated by S. Feng 20250422
+   if (h3_transport()) then
+      do i=1,ncol
+         cam_out%h3(i) = state%q(i,pver,h_i(2)) * 1.0e+6_r8 *mwdry/mwh3
       end do
    end if
    !

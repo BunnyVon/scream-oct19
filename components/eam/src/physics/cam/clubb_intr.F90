@@ -1108,6 +1108,7 @@ end subroutine clubb_init_cnst
    use ppgrid,         only: pver, pverp, pcols
    use constituents,   only: cnst_get_ind, cnst_type
    use co2_cycle,      only: co2_cycle_set_cnst_type
+   use h3_cycle,      only: h3_cycle_set_cnst_type ! added for H3 by S. Feng 20250423
    use camsrfexch,     only: cam_in_t, cam_out_t
    use ref_pres,       only: top_lev => trop_cloud_top_lev
    use time_manager,   only: is_first_step, is_first_restart_step, get_nstep
@@ -1619,6 +1620,12 @@ end subroutine clubb_init_cnst
    ! don't convert co2 tracers to wet mixing ratios
    cnst_type_loc(:) = cnst_type(:)
    call co2_cycle_set_cnst_type(cnst_type_loc, 'wet')
+   call set_dry_to_wet(state1, cnst_type_loc)
+
+   ! constituents are all treated as wet mmr by clubb
+   ! don't convert h3 tracers to wet mixing ratios
+   cnst_type_loc(:) = cnst_type(:)
+   call h3_cycle_set_cnst_type(cnst_type_loc, 'wet')
    call set_dry_to_wet(state1, cnst_type_loc)
 
    if (micro_do_icesupersat) then

@@ -37,15 +37,11 @@ type :: h3_data_flux_type
    
    !To store two time samples from a file to do time interpolation in the next step
    !(pcols,begchunk:endchunk,2)
-!  vvv 3D vvv
    real(r8), pointer, dimension(:,:,:,:) :: h3bdy
    integer                               :: lev_frc
-! ^^^ 3D ^^^
    !To store data after time interpolation from two time samples
    !(pcols,begchunk:endchunk)
-! vvv 3D vvv
    real(r8), pointer, dimension(:,:,:)   :: h3flx
-! ^^^ 3D ^^^
 
    !Forcing file name
    character(len=cl) :: filename   

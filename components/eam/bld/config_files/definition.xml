@@ -150,6 +150,9 @@ Directory name for the CICE config_cache file.
 <entry id="co2_cycle" valid_values="0,1" value="0">
 Turn on CO2 cycle in biogeochemistry model: 0 => no, 1 => yes.
 </entry>
+<entry id="h3_cycle" valid_values="0,1" value="0">
+Turn on tritrium cycle: 0 => no, 1 => yes.
+</entry>
 <entry id="pergro" valid_values="0,1" value="0">
 Modifications that allow perturbation growth testing: 0=off, 1=on.
 </entry>

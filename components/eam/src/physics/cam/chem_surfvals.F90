@@ -47,6 +47,7 @@ module chem_surfvals
    real(r8) :: ch4vmr = -1.0_r8                ! ch4   volume mixing ratio 
    real(r8) :: f11vmr = -1.0_r8                ! cfc11 volume mixing ratio 
    real(r8) :: f12vmr = -1.0_r8                ! cfc12 volume mixing ratio 
+   real(r8) :: h3vmr = -1.0_r8            ! h3   volume mixing ratio by S. Feng 20250425 --- h3 should be alway fixed and no ramped up or down
    character(len=16) :: scenario_ghg = 'FIXED' ! 'FIXED','RAMPED' or 'RAMP_CO2_ONLY'
    integer  :: rampYear_ghg = 0                ! ramped gases fixed at this year (if > 0)
    character(len=256) :: bndtvghg = ' '        ! filename for ramped data
@@ -69,6 +70,7 @@ module chem_surfvals
    integer :: ntim = -1               ! number of yearly data values
    integer,  allocatable :: yrdata(:) ! yearly data values
    real(r8), allocatable :: co2(:)    ! co2 mixing ratios in ppmv 
+   real(r8), allocatable :: h3(:)     ! h3 mixing ratios in ppmv by S. Feng 20250425
    real(r8), allocatable :: ch4(:)    ! ppbv
    real(r8), allocatable :: n2o(:)    ! ppbv
    real(r8), allocatable :: f11(:)    ! pptv
@@ -104,7 +106,7 @@ subroutine chem_surfvals_readnl(nlfile)
    integer            :: flbc_fixed_ymd = 0
    integer            :: flbc_fixed_tod = 0
 
-   namelist /chem_surfvals_nl/ co2vmr, n2ovmr, ch4vmr, f11vmr, f12vmr, &
+   namelist /chem_surfvals_nl/ co2vmr, n2ovmr, ch4vmr, f11vmr, f12vmr, h3vmr, & ! add H3
                                co2vmr_rad, scenario_ghg, rampyear_ghg, bndtvghg, &
                                ramp_co2_start_ymd, ramp_co2_annual_rate, ramp_co2_cap, &
                                ghg_yearStart_model, ghg_yearStart_data
@@ -130,6 +132,7 @@ subroutine chem_surfvals_readnl(nlfile)
 #ifdef SPMD
    ! Broadcast namelist variables
    call mpibcast (co2vmr,                          1,   mpir8, 0, mpicom)
+   call mpibcast (h3vmr,                          1,   mpir8, 0, mpicom) ! add H3 by S. Feng 20250425
    call mpibcast (n2ovmr,                          1,   mpir8, 0, mpicom)
    call mpibcast (ch4vmr,                          1,   mpir8, 0, mpicom)
    call mpibcast (f11vmr,                          1,   mpir8, 0, mpicom)
@@ -255,7 +258,7 @@ subroutine chem_surfvals_init()
       call chem_surfvals_set()
    else if (scenario_ghg == 'CHEM_LBC_FILE') then
       ! set by lower boundary conditions file
-      call flbc_inti( flbc_file, flbc_list, flbc_timing, co2vmr, ch4vmr, n2ovmr, f11vmr, f12vmr )
+      call flbc_inti( flbc_file, flbc_list, flbc_timing, co2vmr, h3vmr, ch4vmr, n2ovmr, f11vmr, f12vmr )
       call chem_surfvals_set()
    else
       call endrun ('chem_surfvals_init: input namelist SCENARIO_GHG must be set to either FIXED,'  // &
@@ -268,6 +271,7 @@ subroutine chem_surfvals_init()
       write(iulog,*) '  n2o volume mixing ratio = ',n2ovmr
       write(iulog,*) '  f11 volume mixing ratio = ',f11vmr
       write(iulog,*) '  f12 volume mixing ratio = ',f12vmr
+      write(iulog,*) '  h3 volume mixing ratio = ',h3vmr
    end if
 
 end subroutine chem_surfvals_init
@@ -361,19 +365,24 @@ end subroutine ghg_ramp_read
 !=========================================================================================
 
 function chem_surfvals_get(name)
-  use physconst,    only: mwdry, mwco2
+  use physconst,    only: mwdry, mwco2, mwh3
 
   character(len=*), intent(in) :: name
 
-  real(r8) :: rmwco2 
+  real(r8) :: rmwco2 , rmwh3
   real(r8) :: chem_surfvals_get
 
   rmwco2 = mwco2/mwdry    ! ratio of molecular weights of co2 to dry air
+  rmwh3 = mwh3/mwdry    ! ratio of molecular weights of h3 to dry air
   select case (name)
   case ('CO2VMR')
      chem_surfvals_get = co2vmr
   case ('CO2MMR')
      chem_surfvals_get = rmwco2 * co2vmr
+  case('H3VMR')
+     chem_surfvals_get = h3vmr
+  case ('H3MMR')
+     chem_surfvals_get = rmwh3 * h3vmr
   case ('N2OVMR')
      chem_surfvals_get = n2ovmr
   case ('CH4VMR')
@@ -407,7 +416,7 @@ function chem_surfvals_co2_rad(vmr_in)
    ! CO2 to the history file.  The optional argument allows returning the
    ! value as vmr.
 
-   use physconst,    only: mwdry, mwco2
+   use physconst,    only: mwdry, mwco2, mwh3
 
    ! Arguments
    logical, intent(in), optional :: vmr_in  ! return CO2 as vmr
@@ -584,6 +593,7 @@ subroutine chem_surfvals_set_all()
 !   f11,f12 in pptv
 !
    co2vmr = (co2(nyrm)*fact1 + co2(nyrp)*fact2)*1.e-06_r8
+   h3vmr = (h3(nyrm)*fact1 + h3(nyrp)*fact2)*1.e-06_r8 ! needed to be changed. currently in ppmv following CO2 convension
    ch4vmr = (ch4(nyrm)*fact1 + ch4(nyrp)*fact2)*1.e-09_r8
    n2ovmr = (n2o(nyrm)*fact1 + n2o(nyrp)*fact2)*1.e-09_r8
 

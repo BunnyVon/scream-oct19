@@ -993,6 +993,34 @@ if ($co2_cycle) {
 my $co2_cycle_rad_passive = ($nl->get_value('co2_cycle_rad_passive') =~ /$TRUE/io);
 
 
+# TRITIUM cycle constituents ! added for H3 transport by S. Feng 20250422
+my $h3_cycle = $cfg->get('h3_cycle');
+
+if ($h3_cycle) {
+
+    # h3_flag turns on the h3_cycle code in CAM
+    add_default($nl, 'h3_flag', 'val'=>'.true.');
+
+    add_default($nl, 'h3_print_diags_timestep', 'val'=>'.true.');
+    add_default($nl, 'h3_print_diags_monthly', 'val'=>'.false.');
+    add_default($nl, 'h3_print_diags_total', 'val'=>'.true.');
+    add_default($nl, 'h3_conserv_error_tol_per_year', 'val'=>'5.e-13');
+
+
+    # Supply a nuclear release dataset if the h3_cycle is active and it's a
+    # transient run ...
+    if ($sim_year =~ /(\d+)-(\d+)/) {
+
+        add_default($nl, 'h3_readflux_ant', 'val'=>'.true.');
+
+        # Check whether user has explicitly turned off reading the nuclear release dataset.
+        # (user specification has higher precedence than the true value set above)
+        if ($nl->get_value('h3_readflux_ant') =~ /$TRUE/io) {
+            add_default($nl, 'h3flux_ant_file', 'sim_year'=>$sim_year);
+        }
+    }
+}
+
 # If test tracers have been requested, set tracers_flag=.true.
 if ($cfg->get('nadv_tt')) { add_default($nl, 'tracers_flag', 'val'=>'.true.'); }
 if ($cfg->get('age_of_air_trcs')) { add_default($nl, 'aoa_tracers_flag', 'val'=>'.true.'); }

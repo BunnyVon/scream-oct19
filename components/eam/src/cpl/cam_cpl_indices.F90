@@ -49,6 +49,7 @@ module cam_cpl_indices
   integer :: index_a2x_Faxa_dstdry4    ! flux: Size 4 dust -- dry deposition
   integer :: index_a2x_Sa_co2prog      ! bottom atm level prognostic co2
   integer :: index_a2x_Sa_co2diag      ! bottom atm level diagnostic co2
+  integer :: index_a2x_Sa_h3       ! sensible heat flux
 
   integer :: index_x2a_Sx_t            ! surface temperature             
   integer :: index_x2a_So_t            ! sea surface temperature         

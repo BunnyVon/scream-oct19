@@ -3,6 +3,7 @@ module restart_physics
   use shr_kind_mod,       only: r8 => shr_kind_r8
   use spmd_utils,         only: masterproc
   use co2_cycle,          only: co2_transport
+  use h3_cycle,           only: h3_transport  ! added for H3 by S. Feng 20250422
   use constituents,       only: pcnst
   use comsrf,             only: sgh, sgh30, trefmxav, trefmnav, initialize_comsrf 
   use ioFileMod
@@ -40,6 +41,7 @@ module restart_physics
 
     type(var_desc_t) :: trefmxav_desc, trefmnav_desc, flwds_desc, sgh_desc, &
          sgh30_desc, solld_desc, co2prog_desc, co2diag_desc, sols_desc, soll_desc, &
+         h3_desc, & !added for H3 by S. Feng 20250422
          solsd_desc, emstot_desc, absnxt_desc(4)
 
     type(var_desc_t) :: bcphidry_desc, bcphodry_desc, ocphidry_desc, ocphodry_desc, &
@@ -153,6 +155,11 @@ module restart_physics
           ierr = pio_def_var(File, 'CO2PROG', pio_double, hdimids, co2prog_desc)
           ierr = pio_def_var(File, 'CO2DIAG', pio_double, hdimids, co2diag_desc)
        end if
+
+       ! added for H3 by S. Feng 20250422
+       if(h3_transport()) then
+          ierr = pio_def_var(File, 'H3', pio_double, hdimids, h3_desc)
+       end if       
 
        ! cam_import variables -- write the constituent surface fluxes as individual 2D arrays
        ! rather than as a single variable with a pcnst dimension.  Note that the cflx components
@@ -400,6 +407,15 @@ module restart_physics
                tmpfield(:ncol, i) = cam_out(i)%co2diag(:ncol)
             end do
             call pio_write_darray(File, co2diag_desc, iodesc, tmpfield, ierr)
+         end if
+
+         !added for H3 by S. Feng 20250422
+         if (h3_transport()) then
+            do i = begchunk, endchunk
+               ncol = cam_out(i)%ncol
+               tmpfield(:ncol, i) = cam_out(i)%h3(:ncol)
+            end do
+            call pio_write_darray(File, h3_desc, iodesc, tmpfield, ierr)
          end if
 
          ! cam_in components
@@ -690,6 +706,17 @@ module restart_physics
            do c=begchunk,endchunk
               do i=1,pcols
                  cam_out(c)%co2diag(i) = tmpfield2(i, c)
+              end do
+           end do
+        end if
+
+        !added for H3 by S. Feng 20250422
+        if (h3_transport()) then
+           ierr = pio_inq_varid(File, 'H3', vardesc)
+           call pio_read_darray(File, vardesc, iodesc, tmpfield2, ierr)
+           do c=begchunk,endchunk
+              do i=1,pcols
+                 cam_out(c)%h3(i) = tmpfield2(i, c)
               end do
            end do
         end if

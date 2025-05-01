@@ -21,6 +21,7 @@ contains
     use ppgrid,                 only: pver, pcols
     use constituents,           only: pcnst, cnst_get_ind, cnst_type
     use co2_cycle,              only: co2_cycle_set_cnst_type
+    use h3_cycle,               only: h3_cycle_set_cnst_type ! added for H3 by S. Feng 20250422
     use camsrfexch,             only: cam_in_t
 
     implicit none
@@ -60,6 +61,13 @@ contains
     call set_dry_to_wet(state, cnst_type_loc)
 
     !-------------------------------------------------------
+    !-------------------------------------------------------
+    ! Assume 'wet' mixing ratios in surface diffusion code.
+    ! don't convert H3 tracers to wet mixing ratios
+
+    cnst_type_loc(:) = cnst_type(:)
+    call h3_cycle_set_cnst_type(cnst_type_loc, 'wet')
+    call set_dry_to_wet(state, cnst_type_loc)
     ! Initialize ptend
 
     lq(:) = .TRUE.
@@ -91,6 +99,14 @@ contains
 
     cnst_type_loc(:) = cnst_type(:)
     call co2_cycle_set_cnst_type(cnst_type_loc, 'wet')
+    call set_wet_to_dry(state, cnst_type_loc)
+  
+    ! -----------------------------------------------------
+    ! convert wet mmr back to dry before conservation check
+    ! avoid converting co2 tracers again
+
+    cnst_type_loc(:) = cnst_type(:)
+    call h3_cycle_set_cnst_type(cnst_type_loc, 'wet')
     call set_wet_to_dry(state, cnst_type_loc)
 
     return

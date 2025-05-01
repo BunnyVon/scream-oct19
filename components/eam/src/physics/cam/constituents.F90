@@ -131,6 +131,7 @@ CONTAINS
     padv = padv+1
     ind  = padv
     if (padv > pcnst) then
+       write (iulog,*) 'padv = ', padv
        write(iulog,*) 'CNST_ADD: advected tracer index greater than pcnst = ', pcnst
        call endrun
     end if

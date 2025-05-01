@@ -152,6 +152,10 @@ subroutine phys_register
     use radiation,          only: radiation_register
     use co2_cycle,          only: co2_register
     use co2_diagnostics,    only: co2_diags_register
+    !add for H3 transport by S. Feng 20250422
+    use h3_cycle,           only: h3_register
+    use h3_diagnostics,     only: h3_diags_register
+    !---
     use flux_avg,           only: flux_avg_register
     use iondrag,            only: iondrag_register
     use ionosphere,         only: ionos_register
@@ -311,6 +315,10 @@ subroutine phys_register
        ! co2 constituents
        call co2_register()
        call co2_diags_register()
+
+      ! H3 constituents ! added by S. Feng 20250422
+       call h3_register()
+       call h3_diags_register()
 
        ! register data model ozone with pbuf
        if (cam3_ozone_data_on) then
@@ -741,6 +749,7 @@ subroutine phys_init( phys_state, phys_tend, pbuf2d, cam_out )
     use cloud_fraction,     only: cldfrc_init
     use cldfrc2m,           only: cldfrc2m_init
     use co2_cycle,          only: co2_init, co2_transport
+    use h3_cycle,          only: h3_init, h3_transport !add for H3 transport by S. Feng 20250422
     use convect_deep,       only: convect_deep_init
     use convect_shallow,    only: convect_shallow_init
     use cam_diagnostics,    only: diag_init
@@ -751,6 +760,7 @@ subroutine phys_init( phys_state, phys_tend, pbuf2d, cam_out )
     use radiation,          only: radiation_init
     use cloud_diagnostics,  only: cloud_diagnostics_init
     use co2_diagnostics,    only: co2_diags_init
+    use h3_diagnostics,    only: h3_diags_init !add for H3 transport by S. Feng 20250422
     use stratiform,         only: stratiform_init
     use wv_saturation,      only: wv_sat_init
     use microp_driver,      only: microp_driver_init
@@ -901,6 +911,12 @@ subroutine phys_init( phys_state, phys_tend, pbuf2d, cam_out )
        call co2_init()
     end if
     call co2_diags_init(phys_state)
+
+    ! h3 cycle    !add for H3 transport by S. Feng 20250422     
+    if (h3_transport()) then
+       call h3_init()
+    end if
+    call h3_diags_init(phys_state)
 
     ! CAM3 prescribed ozone
     if (cam3_ozone_data_on) call cam3_ozone_data_init(phys_state)
@@ -1311,6 +1327,10 @@ subroutine phys_run2(phys_state, ztodt, phys_tend, pbuf2d,  cam_out, &
     use co2_diagnostics,only: get_total_carbon, print_global_carbon_diags, &
                               co2_diags_store_fields, co2_diags_read_fields
     use co2_cycle,      only: co2_transport
+    ! add for H3 transport by S. Feng 20250422
+    use h3_diagnostics,only: get_total_h3, print_global_h3_diags, &
+                              h3_diags_store_fields, h3_diags_read_fields
+    use h3_cycle,      only: h3_transport
     !
     ! Input arguments
     !
@@ -1385,6 +1405,14 @@ subroutine phys_run2(phys_state, ztodt, phys_tend, pbuf2d,  cam_out, &
        end if
     end if
 
+    ! Get tritium conservation fields from pbuf if restarting
+    ! add for H3 transport by S. Feng 20250422
+    if ( h3_transport() ) then
+       if ( is_first_restart_step() ) then
+          call h3_diags_read_fields(phys_state, pbuf2d)
+       end if
+    end if
+
     call system_clock(count=beg_proc_cnt)
 
 !$OMP PARALLEL DO SCHEDULE(STATIC,1) &
@@ -1453,6 +1481,27 @@ subroutine phys_run2(phys_state, ztodt, phys_tend, pbuf2d,  cam_out, &
           end if
        end do
        call co2_diags_store_fields(phys_state, pbuf2d)
+    end if
+
+    !
+    ! Check for tritium conservation add for H3 transport by S. Feng 20250422
+    !
+    if ( h3_transport() ) then
+       do c = begchunk, endchunk
+          call get_total_h3(phys_state(c), 'wet')
+       end do
+       call print_global_h3_diags(phys_state, ztodt, nstep)
+       do c = begchunk, endchunk
+          ncol = get_ncols_p(c)
+          phys_state(c)%th_prev(:ncol) = phys_state(c)%th_curr(:ncol)
+          if ( is_first_step() ) then
+             phys_state(c)%th_init(:ncol) = phys_state(c)%th_curr(:ncol)
+          end if
+          if ( is_end_curr_month() ) then
+             phys_state(c)%th_mnst(:ncol) = phys_state(c)%th_curr(:ncol)
+          end if
+       end do
+       call h3_diags_store_fields(phys_state, pbuf2d)
     end if
 
     call t_startf ('physpkg_st2')
@@ -1568,6 +1617,9 @@ subroutine tphysac (ztodt,   cam_in,  &
     use phys_control,       only: use_qqflx_fixer
     use co2_cycle,          only: co2_cycle_set_ptend, co2_transport
     use co2_diagnostics,    only: get_carbon_sfc_fluxes, get_carbon_air_fluxes
+    ! add for H3 transport by S. Feng 20250422
+    use h3_cycle,          only:  h3_transport
+    use h3_diagnostics,    only: get_h3_sfc_fluxes
 
     implicit none
 

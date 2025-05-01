@@ -222,6 +222,7 @@ contains
    use check_energy,     only: check_energy_defaultopts, check_energy_setopts
    use cam_restart,      only: restart_defaultopts, restart_setopts, restart_printopts
    use co2_cycle,        only: co2_cycle_readnl
+   use h3_cycle,         only: h3_cycle_readnl ! S. Feng 20250422
    use shr_string_mod,   only: shr_string_toUpper
    use iop_data_mod,     only: iop_setopts,iop_default_opts
 
@@ -525,6 +526,7 @@ contains
    call spa_readnl(nlfilename)
    call prescribed_ghg_readnl(nlfilename)
    call co2_cycle_readnl(nlfilename)
+   call h3_cycle_readnl(nlfilename) ! S. Feng 20250422
    call aircraft_emit_readnl(nlfilename)
    call cospsimulator_intr_readnl(nlfilename)
    call sat_hist_readnl(nlfilename, hfilename_spec, mfilt, fincl, nhtfrq, avgflag_pertape)

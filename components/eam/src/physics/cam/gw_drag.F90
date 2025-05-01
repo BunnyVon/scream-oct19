@@ -574,6 +574,7 @@ subroutine gw_tend(state, sgh, pbuf, dt, ptend, cam_in)
   use physics_types,  only: physics_state_copy, set_dry_to_wet
   use constituents,   only: cnst_type
   use co2_cycle,      only: co2_cycle_set_cnst_type
+  use h3_cycle,       only: h3_cycle_set_cnst_type ! addded for H3 by S. Feng 20250423
   use physics_buffer, only: physics_buffer_desc, pbuf_get_field
   use camsrfexch, only: cam_in_t
   ! Location-dependent cpair
@@ -693,6 +694,11 @@ subroutine gw_tend(state, sgh, pbuf, dt, ptend, cam_in)
   cnst_type_loc(:) = cnst_type(:)
   call co2_cycle_set_cnst_type(cnst_type_loc, 'wet')
   call set_dry_to_wet(state1, cnst_type_loc)
+
+  cnst_type_loc(:) = cnst_type(:)
+  call h3_cycle_set_cnst_type(cnst_type_loc, 'wet')
+  call set_dry_to_wet(state1, cnst_type_loc)
+
 
   lchnk = state1%lchnk
   ncol  = state1%ncol

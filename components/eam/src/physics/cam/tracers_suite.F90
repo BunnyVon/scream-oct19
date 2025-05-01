@@ -103,7 +103,7 @@ function get_tracer_name(n)
 
 ! ----------------------------- Local ---------------------------------
   character(len=5), dimension(trac_names), parameter :: & ! constituent names
-       tracer_names  =  (/ 'TT_LW', 'TT_MD', 'TT_HI', 'TTRMD' , 'TT_UN', 'TT_H3'/)
+       tracer_names  =  (/ 'TT_LW', 'TT_MD', 'TT_HI', 'TTRMD' , 'TT_UN'/)
   
 !-----------------------------------------------------------------------
 
@@ -178,8 +178,6 @@ subroutine init_cnst_tr(m,q, gcid)
    else if ( nbase == 4 ) then
       call init_cnst_md(q, gcid, rev_in=1)
    else if ( nbase == 5 ) then
-      call init_cnst_un(q, gcid)
-   else if ( nbase == 6 ) then
       call init_cnst_un(q, gcid)
    else
       write(iulog,*) 'tracers_suite:init_cnst_tr()'

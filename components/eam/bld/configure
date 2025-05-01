@@ -131,6 +131,8 @@ OPTIONS
                         clubb_single_prec (Run CLUBB in single precision)
      -co2_cycle         This option is meant to be used with the -ccsm_seq option.  It modifies the
                         EAM configuration by increasing the number of advected constituents by 4.
+     -h3_cycle          This option is meant to be used with the -ccsm_seq option.  It modifies the
+                        EAM configuration by increasing the number of advected constituents by 2.               
      -comp_intf         Specify the component interfaces [mct | esmf] (default: mct).
      -cppdefs <string>  A string of user specified CPP defines.  Appended to
                         Makefile defaults.  E.g. -cppdefs '-DVAR1 -DVAR2'
@@ -344,6 +346,7 @@ GetOptions(
     "clubb_opts=s"              => \$opts{'clubb_opts'},
     "shoc_sgs"                  => \$opts{'shoc_sgs'},
     "co2_cycle"                 => \$opts{'co2_cycle'},
+    "h3_cycle"                  => \$opts{'h3_cycle'},
     "comp_intf=s"               => \$opts{'comp_intf'},
     "cosp"                      => \$opts{'cosp'},
     "cppdefs=s"                 => \$opts{'cppdefs'},
@@ -940,6 +943,15 @@ my $co2_cycle = $cfg_ref->get('co2_cycle');
 if ($co2_cycle and $print>=2) { print "co2_cycle option: ON$eol"; }
 
 #-----------------------------------------------------------------------------------------------
+# TRITIUM option
+if (defined $opts{'h3_cycle'}) {
+    $cfg_ref->set('h3_cycle', $opts{'h3_cycle'});
+}
+my $h3_cycle = $cfg_ref->get('h3_cycle');
+
+if ($h3_cycle and $print>=2) { print "h3_cycle option: ON$eol"; }
+
+#-----------------------------------------------------------------------------------------------
 # Micro-physics package
 
 # The default for the current physics package is:
@@ -1499,6 +1511,12 @@ else {
         if ($co2_cycle) {
             $nadv += 4;
             if ($print>=2) { print "Advected constituents added by co2_cycle: 4$eol"; }
+        }
+        
+        # h3_cycle
+        if ($h3_cycle) {
+            $nadv += 2;
+            if ($print>=2) { print "Advected constituents added by h3_cycle: 2$eol"; }
         }
 
         # Chemistry package:

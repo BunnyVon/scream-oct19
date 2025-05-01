@@ -46,15 +46,16 @@ module mo_flbc
   type(time_ramp) :: flbc_timing
   integer ::  ncdate, ncsec
 
-  integer, parameter :: nghg = 5
+  integer, parameter :: nghg = 6
   integer, parameter :: max_nflbc = pcnst+nghg
 
   integer, parameter :: co2_ndx = 1
-  integer, parameter :: ch4_ndx = 2
-  integer, parameter :: n2o_ndx = 3
-  integer, parameter :: f11_ndx = 4
-  integer, parameter :: f12_ndx = 5
-  character(len=5)  :: ghg_names(nghg) = (/ 'CO2  ','CH4  ','N2O  ','CFC11','CFC12' /)
+  integer, parameter :: h3_ndx = 2 
+  integer, parameter :: ch4_ndx = 3
+  integer, parameter :: n2o_ndx = 4
+  integer, parameter :: f11_ndx = 5
+  integer, parameter :: f12_ndx = 6
+  character(len=5)  :: ghg_names(nghg) = (/ 'CO2  ','H3  ','CH4  ','N2O  ','CFC11','CFC12' /)
   integer :: ghg_indices(nghg) = -1
 
   type(flbc) :: flbcs(max_nflbc)
@@ -63,7 +64,7 @@ module mo_flbc
 
 contains
 
-  subroutine flbc_inti( flbc_file, flbc_list, flbc_timing_in, co2vmr, ch4vmr, n2ovmr, f11vmr, f12vmr )
+  subroutine flbc_inti( flbc_file, flbc_list, flbc_timing_in, co2vmr, h3vmr, ch4vmr, n2ovmr, f11vmr, f12vmr )
     !-----------------------------------------------------------------------
     ! 	... initialize the fixed lower bndy cond
     !-----------------------------------------------------------------------
@@ -83,7 +84,7 @@ contains
     character(len=*), intent(in) :: flbc_file
     character(len=*), intent(in) :: flbc_list(:)
     type(time_ramp),  intent(in) :: flbc_timing_in
-    real(r8),         intent(in) :: co2vmr, ch4vmr, n2ovmr, f11vmr, f12vmr
+    real(r8),         intent(in) :: co2vmr, h3vmr, ch4vmr, n2ovmr, f11vmr, f12vmr
 
     !-----------------------------------------------------------------------
     ! 	... local variables
@@ -186,6 +187,9 @@ contains
     ! check that user has not set vmr namelist values... 
     if ( ghg_indices(co2_ndx) > 0 .and. co2vmr>1.e-6_r8) then
        call endrun('flbc_inti: cannot specify both co2vmr and CO2 in flbc_file')
+    endif
+    if ( ghg_indices(h3_ndx) > 0 .and. h3vmr>1.e-6_r8) then
+       call endrun('flbc_inti: cannot specify both h3vmr and H3 in flbc_file')
     endif
     if ( ghg_indices(ch4_ndx) > 0 .and. ch4vmr > 0._r8) then
        call endrun('flbc_inti: cannot specify both ch4vmr and CH4 in flbc_file')
@@ -733,7 +737,7 @@ contains
 
   end subroutine get_dels
 
-  subroutine flbc_gmean_vmr(co2vmr,ch4vmr,n2ovmr,f11vmr,f12vmr)
+  subroutine flbc_gmean_vmr(co2vmr, ch4vmr,n2ovmr,f11vmr,f12vmr)
 
      implicit none
 

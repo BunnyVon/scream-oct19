@@ -85,6 +85,8 @@ subroutine phys_register
   use radiation,                only: radiation_register
   use co2_cycle,                only: co2_register
   use co2_diagnostics,          only: co2_diags_register
+  use h3_cycle,                 only: h3_register
+  use h3_diagnostics,           only: h3_diags_register ! added for H3 diagnostics by S. Feng 20250423
   use flux_avg,                 only: flux_avg_register
   use ionosphere,               only: ionos_register
   use prescribed_ozone,         only: prescribed_ozone_register
@@ -158,6 +160,10 @@ subroutine phys_register
   ! co2 constituents
   call co2_register()
   call co2_diags_register()
+
+  ! h3 constituents
+  call h3_register()
+  call h3_diags_register()  
 
   call prescribed_volcaero_register()
   call prescribed_ozone_register()
@@ -520,6 +526,8 @@ subroutine phys_init( phys_state, phys_tend, pbuf2d, cam_out )
   use prescribed_volcaero,only: prescribed_volcaero_init
   use co2_cycle,          only: co2_init, co2_transport
   use co2_diagnostics,    only: co2_diags_init
+  use h3_cycle,           only: h3_init, h3_transport
+  use h3_diagnostics,     only: h3_diags_init ! added for H3 diagnostics by S. Feng 20250423
   use cam_diagnostics,    only: diag_init
   use gw_drag,            only: gw_init
   use radheat,            only: radheat_init
@@ -632,6 +640,10 @@ subroutine phys_init( phys_state, phys_tend, pbuf2d, cam_out )
   ! co2 cycle            
   if (co2_transport()) call co2_init()
   call co2_diags_init(phys_state)
+
+  ! h3 cycle            
+  if (h3_transport()) call h3_init()
+  call h3_diags_init(phys_state)
 
   call gw_init()
 
@@ -1064,6 +1076,7 @@ subroutine tphysac (ztodt, cam_in, sgh, sgh30, cam_out, state, tend, pbuf, fsds 
   use flux_avg,           only: flux_avg_run
   use phys_control,       only: use_qqflx_fixer
   use co2_cycle,          only: co2_cycle_set_ptend
+  use h3_cycle,           only: h3_cycle_set_ptend ! added for H3 by S. Feng 20250423
 
   implicit none
   !-----------------------------------------------------------------------------

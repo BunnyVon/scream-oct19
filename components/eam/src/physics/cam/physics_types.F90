@@ -119,7 +119,19 @@ module physics_types
           c_iflx_air, &! total time integrated aircraft carbon emissions
           c_iflx_sff, &! total time integrated surface fossil fuel carbon flux
           c_iflx_lnd, &! total time integrated surface land carbon flux
-          c_iflx_ocn   ! total time integrated surface ocean carbon flux
+          c_iflx_ocn, &! total time integrated surface ocean carbon flux
+          ! added for h3 transport by S. Feng 20250424
+          th_curr,    &! vertically integrated total h3 of current state
+          th_init,    &! vertically integrated total h3 at start of run
+          th_mnst,    &! vertically integrated total h3 at start of month
+          th_prev,    &! vertically integrated total h3 of previous time step
+          h_flux_sfc, &! current surface h3 flux from nuclear reaction
+          h_flux_san, &! current surface anthropogenic h3 flux from nuclear reaction
+          h_mflx_sfc, &! monthly accumulated surface h3 flux from nuclear reaction
+          h_mflx_san, &! monthly accumulated surface h3 flux from nuclear reaction
+          h_iflx_sfc, &! total time integrated surface anthropogenic h3 flux from nuclear reaction
+          h_iflx_san   ! total time integrated surface h3 flux from nuclear reaction
+
      integer :: count ! count of values with significant energy or water imbalances
      integer, dimension(:),allocatable           :: &
           latmapback, &! map from column to unique lat for that column
@@ -549,6 +561,28 @@ contains
     call shr_assert_in_domain(state%c_iflx_ocn(:ncol),      is_nan=.false., &
          varname="state%c_iflx_ocn",    msg=msg)
 
+   ! added for h3 transport by S. Feng 20250424
+   call shr_assert_in_domain(state%th_curr(:ncol),      is_nan=.false., &
+         varname="state%th_curr",    msg=msg)
+    call shr_assert_in_domain(state%th_init(:ncol),      is_nan=.false., &
+         varname="state%th_init",    msg=msg)
+    call shr_assert_in_domain(state%th_mnst(:ncol),      is_nan=.false., &
+         varname="state%th_mnst",    msg=msg)
+    call shr_assert_in_domain(state%th_prev(:ncol),      is_nan=.false., &
+         varname="state%th_prev",    msg=msg)
+    call shr_assert_in_domain(state%h_flux_sfc(:ncol),      is_nan=.false., &
+         varname="state%h_flux_sfc",    msg=msg)
+    call shr_assert_in_domain(state%h_flux_san(:ncol),      is_nan=.false., &
+         varname="state%h_flux_san",    msg=msg)
+    call shr_assert_in_domain(state%h_mflx_sfc(:ncol),      is_nan=.false., &
+         varname="state%h_mflx_sfc",    msg=msg)
+    call shr_assert_in_domain(state%h_mflx_san(:ncol),      is_nan=.false., &
+         varname="state%h_mflx_san",    msg=msg)
+    call shr_assert_in_domain(state%h_iflx_sfc(:ncol),      is_nan=.false., &
+         varname="state%h_iflx_sfc",    msg=msg)
+    call shr_assert_in_domain(state%h_iflx_san(:ncol),      is_nan=.false., &
+         varname="state%h_iflx_san",    msg=msg)
+
     ! 2-D variables (at midpoints)
     call shr_assert_in_domain(state%t(:ncol,:),         is_nan=.false., &
          varname="state%t",         msg=msg)
@@ -654,6 +688,27 @@ contains
          varname="state%c_iflx_lnd",  msg=msg)
     call shr_assert_in_domain(state%c_iflx_ocn(:ncol),  lt=posinf_r8, gt=neginf_r8, &
          varname="state%c_iflx_ocn",  msg=msg)
+   ! added for h3 transport by S. Feng 20250424
+    call shr_assert_in_domain(state%th_curr(:ncol),     lt=posinf_r8, gt=neginf_r8, &
+         varname="state%th_curr",     msg=msg)
+    call shr_assert_in_domain(state%th_init(:ncol),     lt=posinf_r8, gt=neginf_r8, &
+         varname="state%th_init",     msg=msg)
+    call shr_assert_in_domain(state%th_mnst(:ncol),     lt=posinf_r8, gt=neginf_r8, &
+         varname="state%th_mnst",     msg=msg)
+    call shr_assert_in_domain(state%th_prev(:ncol),     lt=posinf_r8, gt=neginf_r8, &
+         varname="state%th_prev",     msg=msg)
+    call shr_assert_in_domain(state%h_flux_sfc(:ncol),  lt=posinf_r8, gt=neginf_r8, &
+         varname="state%h_flux_sfc",  msg=msg)
+    call shr_assert_in_domain(state%h_flux_san(:ncol),  lt=posinf_r8, gt=neginf_r8, &
+         varname="state%h_flux_san",  msg=msg)
+    call shr_assert_in_domain(state%h_mflx_sfc(:ncol),  lt=posinf_r8, gt=neginf_r8, &
+         varname="state%h_mflx_sfc",  msg=msg)
+    call shr_assert_in_domain(state%h_mflx_san(:ncol),  lt=posinf_r8, gt=neginf_r8, &
+         varname="state%h_mflx_san",  msg=msg)
+    call shr_assert_in_domain(state%h_iflx_sfc(:ncol),  lt=posinf_r8, gt=neginf_r8, &
+         varname="state%h_iflx_sfc",  msg=msg)
+    call shr_assert_in_domain(state%h_iflx_san(:ncol),  lt=posinf_r8, gt=neginf_r8, &
+         varname="state%h_iflx_san",  msg=msg)
 
     ! 2-D variables (at midpoints)
     call shr_assert_in_domain(state%t(:ncol,:),         lt=posinf_r8, gt=0._r8, &
@@ -1330,6 +1385,17 @@ end subroutine physics_ptend_copy
        state_out%c_iflx_sff(i) = state_in%c_iflx_sff(i)
        state_out%c_iflx_lnd(i) = state_in%c_iflx_lnd(i)
        state_out%c_iflx_ocn(i) = state_in%c_iflx_ocn(i)
+       ! added for H3 transport by S. Feng 20250424
+       state_out%th_curr(i)    = state_in%th_curr(i)
+       state_out%th_init(i)    = state_in%th_init(i)
+       state_out%th_mnst(i)    = state_in%th_mnst(i)
+       state_out%th_prev(i)    = state_in%th_prev(i)
+       state_out%h_flux_sfc(i) = state_in%h_flux_sfc(i)
+       state_out%h_flux_san(i) = state_in%h_flux_san(i)
+       state_out%h_mflx_sfc(i) = state_in%h_mflx_sfc(i)
+       state_out%h_mflx_san(i) = state_in%h_mflx_san(i)
+       state_out%h_iflx_sfc(i) = state_in%h_iflx_sfc(i)
+       state_out%h_iflx_san(i) = state_in%h_iflx_san(i)
     end do
 
     do k = 1, pver
@@ -1709,7 +1775,38 @@ subroutine physics_state_alloc(state,lchnk,psetcols)
 
   allocate(state%c_iflx_ocn(psetcols), stat=ierr)
   if ( ierr /= 0 ) call endrun('physics_state_alloc error: allocation error for state%c_iflx_ocn')
-  
+
+! addded for H3 transport by S. Feng 20250424
+  allocate(state%th_curr(psetcols), stat=ierr)
+  if ( ierr /= 0 ) call endrun('physics_state_alloc error: allocation error for state%th_curr')
+
+  allocate(state%th_init(psetcols), stat=ierr)
+  if ( ierr /= 0 ) call endrun('physics_state_alloc error: allocation error for state%th_init')
+
+  allocate(state%th_mnst(psetcols), stat=ierr)
+  if ( ierr /= 0 ) call endrun('physics_state_alloc error: allocation error for state%th_mnst')
+
+  allocate(state%th_prev(psetcols), stat=ierr)
+  if ( ierr /= 0 ) call endrun('physics_state_alloc error: allocation error for state%th_prev')
+
+   allocate(state%h_flux_sfc(psetcols), stat=ierr)
+  if ( ierr /= 0 ) call endrun('physics_state_alloc error: allocation error for state%h_flux_sfc')
+
+  allocate(state%h_flux_san(psetcols), stat=ierr)
+  if ( ierr /= 0 ) call endrun('physics_state_alloc error: allocation error for state%h_flux_san')
+
+  allocate(state%h_mflx_sfc(psetcols), stat=ierr)
+  if ( ierr /= 0 ) call endrun('physics_state_alloc error: allocation error for state%h_mflx_sfc')
+
+  allocate(state%h_mflx_san(psetcols), stat=ierr)
+  if ( ierr /= 0 ) call endrun('physics_state_alloc error: allocation error for state%h_mflx_san')
+
+  allocate(state%h_iflx_sfc(psetcols), stat=ierr)
+  if ( ierr /= 0 ) call endrun('physics_state_alloc error: allocation error for state%h_iflx_sfc')
+
+  allocate(state%h_iflx_san(psetcols), stat=ierr)
+  if ( ierr /= 0 ) call endrun('physics_state_alloc error: allocation error for state%h_iflx_san')
+
   allocate(state%latmapback(psetcols), stat=ierr)
   if ( ierr /= 0 ) call endrun('physics_state_alloc error: allocation error for state%latmapback')
   
@@ -1770,6 +1867,17 @@ subroutine physics_state_alloc(state,lchnk,psetcols)
   state%c_iflx_sff(:) = inf
   state%c_iflx_lnd(:) = inf
   state%c_iflx_ocn(:) = inf
+  ! added for H3 transport by S. Feng 20250424
+  state%th_curr(:)    = inf
+  state%th_init(:)    = inf
+  state%th_mnst(:)    = inf
+  state%th_prev(:)    = inf
+  state%h_flux_sfc(:) = inf
+  state%h_flux_san(:) = inf
+  state%h_mflx_sfc(:) = inf
+  state%h_mflx_san(:) = inf
+  state%h_iflx_sfc(:) = inf
+  state%h_iflx_san(:) = inf
 
 end subroutine physics_state_alloc
 
@@ -1926,6 +2034,37 @@ subroutine physics_state_dealloc(state)
   deallocate(state%c_iflx_ocn, stat=ierr)
   if ( ierr /= 0 ) call endrun('physics_state_dealloc error: deallocation error for state%c_iflx_ocn')
   
+  ! added for H3 transport by S. Feng 20250424
+    deallocate(state%th_curr, stat=ierr)
+  if ( ierr /= 0 ) call endrun('physics_state_dealloc error: deallocation error for state%th_curr')
+
+  deallocate(state%th_init, stat=ierr)
+  if ( ierr /= 0 ) call endrun('physics_state_dealloc error: deallocation error for state%th_init')
+
+  deallocate(state%th_mnst, stat=ierr)
+  if ( ierr /= 0 ) call endrun('physics_state_dealloc error: deallocation error for state%th_mnst')
+
+  deallocate(state%th_prev, stat=ierr)
+  if ( ierr /= 0 ) call endrun('physics_state_dealloc error: deallocation error for state%th_prev')
+
+  deallocate(state%h_flux_sfc, stat=ierr)
+  if ( ierr /= 0 ) call endrun('physics_state_dealloc error: deallocation error for state%h_flux_sfc')
+
+  deallocate(state%h_flux_san, stat=ierr)
+  if ( ierr /= 0 ) call endrun('physics_state_dealloc error: deallocation error for state%h_flux_san')
+
+  deallocate(state%h_mflx_sfc, stat=ierr)
+  if ( ierr /= 0 ) call endrun('physics_state_dealloc error: deallocation error for state%h_mflx_sfc')
+
+  deallocate(state%h_mflx_san, stat=ierr)
+  if ( ierr /= 0 ) call endrun('physics_state_dealloc error: deallocation error for state%h_mflx_san')
+
+  deallocate(state%h_iflx_sfc, stat=ierr)
+  if ( ierr /= 0 ) call endrun('physics_state_dealloc error: deallocation error for state%h_iflx_sfc')
+
+  deallocate(state%h_iflx_san, stat=ierr)
+  if ( ierr /= 0 ) call endrun('physics_state_dealloc error: deallocation error for state%h_iflx_san')
+
   deallocate(state%latmapback, stat=ierr)
   if ( ierr /= 0 ) call endrun('physics_state_dealloc error: deallocation error for state%latmapback')
   

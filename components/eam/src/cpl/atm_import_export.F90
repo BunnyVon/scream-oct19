@@ -17,7 +17,11 @@ contains
     use co2_cycle     , only: c_i, co2_readFlux_ocn, co2_readFlux_fuel
     use co2_cycle     , only: co2_transport, co2_time_interp_ocn, co2_time_interp_fuel
     use co2_cycle     , only: data_flux_ocn, data_flux_fuel
-    use physconst     , only: mwco2
+    !added for h3 by S. Feng 20250422
+    use h3_cycle     , only: h_i, h3_readFlux_ant
+    use h3_cycle     , only: h3_transport, h3_time_interp_ant 
+    use h3_cycle     , only: data_flux_ant   
+    use physconst     , only: mwco2, mwh3
     use time_manager  , only: is_first_step
     !
     ! Arguments
@@ -142,6 +146,8 @@ contains
              cam_in(c)%fdms(i)     = -x2a(index_x2a_Faoo_fdms_ocn,ig)
           end if
 
+          ! h3 in only consider anthropogenic source from emission file S. Feng 20250422
+
           ig=ig+1
 
        end do
@@ -150,7 +156,7 @@ contains
     ! Get total co2 flux from components,
     ! Note - co2_transport determines if cam_in(c)%cflx(i,c_i(1:4)) is allocated
 
-    if (co2_transport().and.overwrite_flds) then
+     if (co2_transport().and.overwrite_flds) then
 
        ! Interpolate in time for flux data read in
        if (co2_readFlux_ocn) then
@@ -159,7 +165,7 @@ contains
        if (co2_readFlux_fuel) then
           call co2_time_interp_fuel
        end if
-       
+
        ! from ocn : data read in or from coupler or zero
        ! from fuel: data read in or zero
        ! from lnd : through coupler or zero
@@ -215,6 +221,35 @@ contains
           end do
        end do
     end if
+
+   ! Get total h3 flux from components,
+    if (h3_transport().and.overwrite_flds) then
+
+       ! Interpolate in time for flux data read in
+       if (h3_readFlux_ant) then
+          call h3_time_interp_ant
+       end if
+
+       ! from fuel: data read in or zero
+       do c=begchunk,endchunk
+          ncols = get_ncols_p(c)                                                 
+          do i=1,ncols                                                               
+             
+             ! all h3 fluxes in unit kg/m2/s ! 
+
+             if (h3_readFlux_ant) then
+                cam_in(c)%cflx(i,h_i(1)) = data_flux_ant%h3flx(i,1,c)
+             else
+                cam_in(c)%cflx(i,h_i(1)) = 0._r8
+             end if
+             
+             ! merged h3 flux ;  only consider emission from nuclear reactions 
+             cam_in(c)%cflx(i,h_i(2)) = cam_in(c)%cflx(i,h_i(1)) !+ &
+                                       !  cam_in(c)%cflx(i,h_i(2)) + &
+                                       !  cam_in(c)%cflx(i,h_i(3))
+          end do
+       end do
+    end if
     !
     ! if first step, determine longwave up flux from the surface temperature 
     !
@@ -230,6 +265,20 @@ contains
        first_time = .false.
     end if
 
+    !
+    ! if first step, determine longwave up flux from the surface temperature 
+    !
+    if (first_time) then
+       if (is_first_step()) then
+          do c=begchunk, endchunk
+             ncols = get_ncols_p(c)
+             do i=1,ncols
+                cam_in(c)%lwup(i) = shr_const_stebol*(cam_in(c)%ts(i)**4)
+             end do
+          end do
+       end if
+       first_time = .false.
+    end if
   end subroutine atm_import
 
   !===============================================================================
@@ -321,6 +370,11 @@ contains
           end if
           if (index_a2x_Sa_co2diag /= 0) then
              a2x(index_a2x_Sa_co2diag,ig) = cam_out(c)%co2diag(i) ! atm diagnostic co2
+          end if
+         
+         ! added for h3 output by S. Feng 20250422
+          if (index_a2x_Sa_h3 /= 0) then
+             a2x(index_a2x_Sa_h3,ig) = cam_out(c)%h3(i) ! atm h3
           end if
 
           ig=ig+1

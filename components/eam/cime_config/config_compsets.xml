@@ -215,6 +215,12 @@
     <alias>F2010-SCREAM-HR-DYAMOND2</alias>
     <lname>2010_EAM%SCREAM-HR-DYAMOND2_ELM45%SPBC_CICE%PRES_DOCN%DOM_MOSART_SGLC_SWAV</lname>
   </compset>
+
+  <!-- SCREAM compsets with CMIP6 2010 forcings for TRITIUM transport-->
+  <compset>
+    <alias>F2010-SCREAM-HR-DYAMOND2-TRITIUM</alias>
+    <lname>2010_EAM%SCREAM-HR-DYAMOND2-TRITIUM_ELM45%SPBC_CICE%PRES_DOCN%DOM_MOSART_SGLC_SWAV</lname>
+  </compset>
   
   <compset>
     <alias>F2010-SCREAM-LR-DYAMOND2-MPASSI</alias>
@@ -302,6 +308,7 @@
         <value  compset="_EAM%SCREAM-HR-DYAMOND1">2016-08-01</value>
         <value  compset="_EAM%SCREAM-LR-DYAMOND2">2020-01-20</value>
         <value  compset="_EAM%SCREAM-HR-DYAMOND2">2020-01-20</value>
+        <value  compset="_EAM%SCREAM-HR-DYAMOND2-TRITIUM">2020-01-20</value> 
       </values>
     </entry>
 
@@ -403,6 +410,7 @@
         <value compset="_EAM%SCREAM-HR-DYAMOND1">$DIN_LOC_ROOT/atm/cam/sst/sst_ifs_2560x5136_20160725_20160916_c201013.nc</value>
         <value compset="_EAM%SCREAM-LR-DYAMOND1">$DIN_LOC_ROOT/atm/cam/sst/sst_ifs_2560x5136_20160725_20160916_c201013.nc</value>
         <value compset="_EAM%SCREAM-HR-DYAMOND2">$DIN_LOC_ROOT/atm/cam/sst/sst_ifs_360x720_20200110_20200305_c201013.nc</value>
+        <value compset="_EAM%SCREAM-HR-DYAMOND2-TRITIUM">$DIN_LOC_ROOT/atm/cam/sst/sst_ifs_360x720_20200110_20200305_c201013.nc</value> 
         <value compset="_EAM%SCREAM-LR-DYAMOND2">$DIN_LOC_ROOT/atm/cam/sst/sst_ifs_360x720_20200110_20200305_c201013.nc</value>
       </values>
     </entry> 
@@ -412,6 +420,7 @@
         <value compset="_EAM%SCREAM-HR-DYAMOND1">$DIN_LOC_ROOT/ocn/docn7/domain.ocn.2560x5136.201027.nc</value>
         <value compset="_EAM%SCREAM-LR-DYAMOND1">$DIN_LOC_ROOT/ocn/docn7/domain.ocn.2560x5136.201027.nc</value>
         <value compset="_EAM%SCREAM-HR-DYAMOND2">$DIN_LOC_ROOT/ocn/docn7/domain.ocn.360x720.201027.nc</value>
+        <value compset="_EAM%SCREAM-HR-DYAMOND2-TRITIUM">$DIN_LOC_ROOT/ocn/docn7/domain.ocn.360x720.201027.nc</value> 
         <value compset="_EAM%SCREAM-LR-DYAMOND2">$DIN_LOC_ROOT/ocn/docn7/domain.ocn.360x720.201027.nc</value>
       </values>
     </entry> 
@@ -421,6 +430,7 @@
         <value compset="_EAM%SCREAM-HR-DYAMOND1">2016</value>
         <value compset="_EAM%SCREAM-HR-DYAMOND1">2016</value>
         <value compset="_EAM%SCREAM-HR-DYAMOND2">2020</value>
+        <value compset="_EAM%SCREAM-HR-DYAMOND2-TRITIUM">2020</value>
         <value compset="_EAM%SCREAM-HR-DYAMOND2">2020</value>
       </values>
     </entry> 
@@ -430,6 +440,7 @@
         <value compset="_EAM%SCREAM-HR-DYAMOND1">2016</value>
         <value compset="_EAM%SCREAM-LR-DYAMOND1">2016</value>
         <value compset="_EAM%SCREAM-HR-DYAMOND2">2020</value>
+        <value compset="_EAM%SCREAM-LR-DYAMOND2-TRITIUM">2020</value>
         <value compset="_EAM%SCREAM-LR-DYAMOND2">2020</value>
       </values>
     </entry> 
@@ -439,6 +450,7 @@
         <value compset="_EAM%SCREAM-HR-DYAMOND1">2016</value>
         <value compset="_EAM%SCREAM-LR-DYAMOND1">2016</value>
         <value compset="_EAM%SCREAM-HR-DYAMOND2">2020</value>
+        <value compset="_EAM%SCREAM-HR-DYAMOND2-TRITIUM">2020</value>
         <value compset="_EAM%SCREAM-LR-DYAMOND2">2020</value>
       </values>
     </entry>
