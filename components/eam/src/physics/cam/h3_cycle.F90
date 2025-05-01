@@ -349,9 +349,11 @@ subroutine h3_init_cnst(name, q, gcid)
  
    select case (name)
    case ('H3_ANT')
-      q = chem_surfvals_get('h3MMR')
+      !q = 1.e-17 ! 
+      q= chem_surfvals_get('H3MMR')
    case ('H3')
-      q = chem_surfvals_get('h3MMR')
+      !q = 1.e-17 ! 
+      q = chem_surfvals_get('H3MMR')
    end select
 
 end subroutine h3_init_cnst
