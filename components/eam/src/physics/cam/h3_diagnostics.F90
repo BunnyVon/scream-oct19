@@ -108,7 +108,7 @@ contains
       if ( .not. h3_transport() ) return
 
       ! prior H3 amounts
-      ! call pbuf_add_field('th_curr',   'global', dtype_r8, (/pcols/), idx)
+      call pbuf_add_field('th_curr',   'global', dtype_r8, (/pcols/), idx)
       call pbuf_add_field('th_init',    'global', dtype_r8, (/pcols/), idx)
       call pbuf_add_field('th_mnst',    'global', dtype_r8, (/pcols/), idx)
       call pbuf_add_field('th_prev',    'global', dtype_r8, (/pcols/), idx)
@@ -173,6 +173,7 @@ contains
 
       do i = 1, ncol
          th(i) = th(i) * rga
+         print *, 'th(i) = ', i, th(i)
       end do
 
       ! copy new value to state
@@ -270,9 +271,9 @@ contains
       integer :: ierr
       integer :: cdate, year, mon, day, sec
       integer, parameter :: h_num_var     = 4
-      integer, parameter :: f_ts_num_var  = 2
-      integer, parameter :: f_mon_num_var = 5
-      integer, parameter :: f_run_num_var = 5
+      integer, parameter :: f_ts_num_var  = 1
+      integer, parameter :: f_mon_num_var = 2
+      integer, parameter :: f_run_num_var = 2
       character(len=*), parameter :: sub_name='print_global_h3_diags: '
       real(r8) :: time_integrated_flux, state_net_change
       real(r8) :: th_glob(h_num_var)
@@ -308,9 +309,10 @@ contains
             th(i,lchnk,2) = state(lchnk)%th_init(i)
             th(i,lchnk,3) = state(lchnk)%th_mnst(i)
             th(i,lchnk,4) = state(lchnk)%th_prev(i)
+            ! print *, 'th(i,lchnk) = ', i, lchnk, th(i,lchnk,1), th(i,lchnk,2), th(i,lchnk,3), th(i,lchnk,4)  
             ! h3 emissions and fluxes at current time step
             flux_ts(i,lchnk,1) = state(lchnk)%h_flux_sfc(i)
-            flux_ts(i,lchnk,2) = state(lchnk)%h_flux_san(i)
+            ! flux_ts(i,lchnk,2) = state(lchnk)%h_flux_san(i)
             ! monthly accumulated h3 emissions and fluxes
             flux_mon(i,lchnk,1) = state(lchnk)%h_mflx_sfc(i)
             flux_mon(i,lchnk,2) = state(lchnk)%h_mflx_san(i)
@@ -325,23 +327,32 @@ contains
            ( h3_print_diags_monthly .and. is_end_curr_month() ) .or. & 
            ( h3_print_diags_total .and. is_last_step() ) ) then
          call gmean(th, th_glob, h_num_var)
+         ! print *, 'th_glob = ', th_glob
       end if
 
       if ( h3_print_diags_timestep) then
          call gmean(flux_ts,  flux_ts_glob,  f_ts_num_var)
       end if
+      ! print *, 'flux_ts_glob = ', flux_ts_glob
       if ( h3_print_diags_monthly .and. is_end_curr_month() ) then
          call gmean(flux_mon, flux_mon_glob, f_mon_num_var)
       end if
+      ! print *, 'flux_mon_glob = ', flux_mon_glob
       if ( h3_print_diags_total .and. is_last_step() ) then
          call gmean(flux_run, flux_run_glob, f_run_num_var)
       end if
+      ! print *, 'flux_run_glob = ', flux_run_glob
 
       ! assign global means to readable variables
       gth_curr     = th_glob(1)
       gth_init     = th_glob(2)
       gth_mnst     = th_glob(3)
       gth_prev     = th_glob(4)
+      ! print *, 'gth_curr = ', gth_curr
+      ! print *, 'gth_init = ', gth_init
+      ! print *, 'gth_mnst = ', gth_mnst
+      ! print *, 'gth_prev = ', gth_prev
+
 
       gth_flux_sfc = flux_ts_glob(1)
 
@@ -355,8 +366,12 @@ contains
       gth_flux_tot    = gth_flux_sfc 
       gth_mflx_tot    = gth_mflx_sfc 
       gth_iflx_tot    = gth_iflx_sfc 
-
+      ! print *, 'gth_flux_tot = ', gth_flux_tot
+      
       expected_th     = gth_prev + (gth_flux_tot * dtime)
+      ! write(iulog,*)'gth_curr = ',gth_curr
+      ! write(iulog,*)'expected_th = ',expected_th
+      
       rel_error       = ( expected_th - gth_curr ) / gth_curr
 
       expected_th_mon = gth_mnst + gth_mflx_tot ! dtime factor already included

@@ -1490,7 +1490,7 @@ subroutine phys_run2(phys_state, ztodt, phys_tend, pbuf2d,  cam_out, &
        do c = begchunk, endchunk
           call get_total_h3(phys_state(c), 'wet')
        end do
-       call print_global_h3_diags(phys_state, ztodt, nstep)
+      !  call print_global_h3_diags(phys_state, ztodt, nstep)
        do c = begchunk, endchunk
           ncol = get_ncols_p(c)
           phys_state(c)%th_prev(:ncol) = phys_state(c)%th_curr(:ncol)
