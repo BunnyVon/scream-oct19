@@ -446,6 +446,9 @@ CONTAINS
        allocate (cam_out(c)%co2diag(pcols), stat=ierror)
        if ( ierror /= 0 ) call endrun('ATM2HUB_ALLOC error: allocation error co2diag')
 
+       allocate (cam_out(c)%h3(pcols), stat=ierror)
+       if ( ierror /= 0 ) call endrun('ATM2HUB_ALLOC error: allocation error h3')
+
        allocate (cam_out(c)%psl(pcols), stat=ierror)
        if ( ierror /= 0 ) call endrun('ATM2HUB ALLOC error: allocation error psl')
 
