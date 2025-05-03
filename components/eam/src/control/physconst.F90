@@ -53,7 +53,7 @@ module physconst
 
    ! Molecular weights
    real(r8), public, parameter :: mwco2       =  44._r8             ! molecular weight co2
-   real(r8), public, parameter :: mwh3        =  3.016_r8             ! molecular weight h3 !added for H3 S. Feng 20250422
+   real(r8), public, parameter :: mwh3        =  3._r8             ! molecular weight h3 !added for H3 S. Feng 20250422
    real(r8), public, parameter :: mwn2o       =  44._r8             ! molecular weight n2o
    real(r8), public, parameter :: mwch4       =  16._r8             ! molecular weight ch4
    real(r8), public, parameter :: mwf11       = 136._r8             ! molecular weight cfc11
