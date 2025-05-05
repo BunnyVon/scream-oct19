@@ -88,7 +88,7 @@ character(len=cl) :: h3flux_ant_file = 'unset' ! h3 flux from anthropoentic   ac
 integer, parameter :: ncnst = 2                      ! number of constituents implemented
 
 character(len=7), dimension(ncnst), parameter :: & ! constituent names
-     c_names = (/'H3_ANT', 'H3'/)
+     c_names = (/'H3_ANT ', 'H3     '/)
 
 integer :: h3_ant_glo_ind ! global index of 'H3_ANT'
 integer :: h3_glo_ind     ! global index of 'H3'
@@ -349,11 +349,11 @@ subroutine h3_init_cnst(name, q, gcid)
  
    select case (name)
    case ('H3_ANT')
-      !q = 1.e-17 ! 
-      q= chem_surfvals_get('H3MMR')
+      q = 1.e-17 ! 
+      ! q= chem_surfvals_get('H3MMR')
    case ('H3')
-      !q = 1.e-17 ! 
-      q = chem_surfvals_get('H3MMR')
+      q = 1.e-17 ! 
+      ! q = chem_surfvals_get('H3MMR')
    end select
 
 end subroutine h3_init_cnst

@@ -55,7 +55,7 @@ module mo_flbc
   integer, parameter :: n2o_ndx = 4
   integer, parameter :: f11_ndx = 5
   integer, parameter :: f12_ndx = 6
-  character(len=5)  :: ghg_names(nghg) = (/ 'CO2  ','H3  ','CH4  ','N2O  ','CFC11','CFC12' /)
+  character(len=5)  :: ghg_names(nghg) = (/ 'CO2  ','H3   ','CH4  ','N2O  ','CFC11','CFC12' /)
   integer :: ghg_indices(nghg) = -1
 
   type(flbc) :: flbcs(max_nflbc)

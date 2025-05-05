@@ -383,6 +383,8 @@ function chem_surfvals_get(name)
      chem_surfvals_get = h3vmr
   case ('H3MMR')
      chem_surfvals_get = rmwh3 * h3vmr
+     print *, 'rmwh3 = ', rmwh3
+     print *, 'h3vmr = ', h3vmr
   case ('N2OVMR')
      chem_surfvals_get = n2ovmr
   case ('CH4VMR')

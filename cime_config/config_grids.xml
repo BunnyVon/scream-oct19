@@ -4415,11 +4415,11 @@
     </gridmap>
       
     <gridmap rof_grid="r0125" ocn_grid="oRRS18to6v3">
-      <map name="OCN2ROF_SMAPNAME">/pscratch/sd/s/souravt/RRM_setup_tutorial/RRM_generation_inputs/meshes/map_oRRS18to6v3_to_r0125_mono.20230410.nc</map>
+      <map name="OCN2ROF_SMAPNAME">/global/cfs/cdirs/e3sm/feng809/TRIDENT/input/map_oRRS18to6v3_to_r0125_mono.20230410.nc</map>
     </gridmap>
 
     <gridmap rof_grid="r0125" ocn_grid="oRRS18to6v3">
-      <map name="OCN2ROF_SMAPNAME">/pscratch/sd/s/souravt/RRM_setup_tutorial/RRM_generation_inputs/meshes/map_oRRS18to6v3_to_r0125_mono.20231023.nc</map>
+      <map name="OCN2ROF_SMAPNAME">/global/cfs/cdirs/e3sm/feng809/TRIDENT/input/map_oRRS18to6v3_to_r0125_mono.20231023.nc</map>
     </gridmap>
     <!--- current MPAS grids -->
 
